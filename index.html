@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Theme & Color Palette Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .file-input-button,
+        .generate-button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-button:hover,
+        .generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-card,
+        .main-card {
+            animation: fadeIn 0.5s ease-in-out;
+            border: 1px solid #e9ecef;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .preview-json-toggle {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        /* Style for color inputs */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 3px #ccc;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+
+        .tab-button {
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">AI-Powered Theme Generator</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Generate complete, structured theme JSON objects
+                from an image, brand colors, or an existing website.</p>
+        </header>
+
+        <div class="main-card max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            <!-- Tab Controls -->
+            <div class="mb-6 border-b border-gray-200">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button onclick="switchTab('image')" id="tab-image"
+                        class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">
+                        From Image
+                    </button>
+                    <button onclick="switchTab('colors')" id="tab-colors"
+                        class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">
+                        From Colors
+                    </button>
+                    <button onclick="switchTab('website')" id="tab-website"
+                        class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">
+                        From Website
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Input Panels -->
+            <div id="input-panels">
+                <!-- Image Input Panel -->
+                <div id="panel-image">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <div id="image-preview-container"
+                                class="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 transition-all overflow-hidden">
+                                <img id="image-preview" src="" alt="Image Preview"
+                                    class="hidden w-full h-full object-cover">
+                                <span id="image-placeholder" class="text-gray-500 text-center p-4">Upload an image for
+                                    inspiration</span>
+                            </div>
+                            <input type="file" id="image-uploader" accept="image/*" class="hidden">
+                            <button id="upload-button"
+                                class="file-input-button mt-4 w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700">
+                                Upload Inspiration Image
+                            </button>
+                        </div>
+                        <div id="palette-display-image" class="flex flex-col justify-center">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Extracted Palette</h2>
+                            <div id="palette-container-image"
+                                class="palette-container h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 p-4">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Input Panel -->
+                <div id="panel-colors" class="hidden">
+                    <p class="text-center text-gray-600 mb-6">Select a primary and secondary color to generate theme
+                        variations.</p>
+                    <div class="flex justify-center items-center gap-12">
+                        <div class="text-center">
+                            <label for="primary-color-input" class="block mb-2 font-medium">Primary Color</label>
+                            <input type="color" id="primary-color-input" value="#4f46e5">
+                        </div>
+                        <div class="text-center">
+                            <label for="secondary-color-input" class="block mb-2 font-medium">Secondary Color</label>
+                            <input type="color" id="secondary-color-input" value="#10b981">
+                        </div>
+                    </div>
+                    <button id="generate-from-colors-button"
+                        class="generate-button mt-8 w-full md:w-1/2 mx-auto block bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700">Generate
+                        Themes from Colors</button>
+                </div>
+
+                <!-- Website Input Panel -->
+                <div id="panel-website" class="hidden">
+                    <p class="text-center text-gray-600 mb-6">Enter a website URL to extract its color scheme.
+                        <br><small>(This is a simulation and will extract colors from this page)</small></p>
+                    <div class="flex justify-center items-center gap-4">
+                        <input type="url" id="website-url-input" placeholder="https://example.com"
+                            class="w-full md:w-2/3 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <button id="generate-from-website-button"
+                        class="generate-button mt-6 w-full md:w-1/2 mx-auto block bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700">Generate
+                        Themes from Website</button>
+                </div>
+            </div>
+            <div id="palette-display-common" class="hidden mt-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Generated Palette</h2>
+                <div id="palette-container-common"
+                    class="palette-container h-24 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 p-4 max-w-lg mx-auto">
+                </div>
+            </div>
+        </div>
+        <canvas id="color-canvas" class="hidden"></canvas>
+
+        <!-- Generated Themes Section -->
+        <div id="themes-output" class="mt-8 md:mt-12">
+            <!-- Theme cards will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const imageUploader = document.getElementById('image-uploader');
+        const uploadButton = document.getElementById('upload-button');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePlaceholder = document.getElementById('image-placeholder');
+        const canvas = document.getElementById('color-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const themesOutput = document.getElementById('themes-output');
+
+        // --- State & Templates ---
+        let generatedThemesStore = {};
+        const MASTER_THEME_TEMPLATE = { "logos": [], "font_type": "Default", "auth_theme": true, "theme_type": "dark", "sidebar_blur": "200px", "sidebar_alpha": 0.05, "page_item_alpha": 0.035, "event_background": "", "name_card_radius": "20px", "stage_background": "", "stage_text_color": "", "primary_text_color": "", "theme_primary_color": "", "ctrl_bar_shade_alpha": 0.5, "name_card_background": "var(--theme-secondary-color)", "name_card_text_color": "var(--secondary-text-color)", "secondary_text_color": "", "p2p_panel_shade_alpha": 0.5, "theme_secondary_color": "", "lower_third_background": "var(--theme-secondary-color)", "lower_third_text_color": "var(--secondary-text-color)", "screen_saver_background": "", "screen_saver_text_color": "", "primary_background_shade": "255, 255, 255", "alt_primary_background_shade": "0, 0, 0" };
+
+        // --- Event Listeners ---
+        uploadButton.addEventListener('click', () => imageUploader.click());
+        imageUploader.addEventListener('change', handleImageUpload);
+        document.getElementById('generate-from-colors-button').addEventListener('click', handleGenerateFromColors);
+        document.getElementById('generate-from-website-button').addEventListener('click', handleGenerateFromWebsite);
+
+        function showLoader(container) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center text-gray-500">
+                    <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="mt-2">Analyzing colors...</span>
+                </div>`;
+            themesOutput.innerHTML = '<div class="text-center py-10"><h2 class="text-2xl font-semibold">Generating AI Theme Suggestions...</h2></div>';
+        }
+
+        // --- Input Handlers ---
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                imagePreview.src = event.target.result;
+                imagePreview.classList.remove('hidden');
+                imagePlaceholder.classList.add('hidden');
+                const paletteContainer = document.getElementById('palette-container-image');
+                showLoader(paletteContainer);
+                imagePreview.onload = () => setTimeout(() => processImage(imagePreview), 100);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleGenerateFromColors() {
+            const primaryColor = document.getElementById('primary-color-input').value.toUpperCase();
+            const secondaryColor = document.getElementById('secondary-color-input').value.toUpperCase();
+
+            const palette = [
+                shadeColor(primaryColor, -0.6), shadeColor(primaryColor, -0.3), secondaryColor,
+                primaryColor, shadeColor(secondaryColor, 0.4), shadeColor(primaryColor, 0.6)
+            ].map(c => c.toUpperCase());
+
+            const commonPaletteContainer = document.getElementById('palette-container-common');
+            document.getElementById('palette-display-common').classList.remove('hidden');
+            displayPalette(palette, commonPaletteContainer);
+
+            const themes = generateThemesFromPalette(palette);
+            displayThemes(themes);
+        }
+
+        function handleGenerateFromWebsite() {
+            const colorSet = new Set();
+            const hexRegex = /#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/g;
+            const styleSheets = Array.from(document.styleSheets);
+            const styleText = styleSheets.map(s => {
+                try { return Array.from(s.cssRules).map(r => r.cssText).join(''); }
+                catch (e) { return ''; }
+            }).join('');
+
+            const matches = styleText.match(hexRegex) || [];
+            matches.forEach(color => colorSet.add(color.toUpperCase()));
+            ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#6366F1', '#EF4444'].forEach(c => colorSet.add(c));
+
+            let palette = Array.from(colorSet).sort(() => 0.5 - Math.random()).slice(0, 6);
+
+            const commonPaletteContainer = document.getElementById('palette-container-common');
+            document.getElementById('palette-display-common').classList.remove('hidden');
+            displayPalette(palette, commonPaletteContainer);
+
+            const themes = generateThemesFromPalette(palette);
+            displayThemes(themes);
+        }
+
+        // --- Core Logic ---
+        function processImage(img) {
+            const maxDim = 100;
+            const aspectRatio = img.width / img.height;
+            canvas.width = aspectRatio > 1 ? maxDim : maxDim * aspectRatio;
+            canvas.height = aspectRatio > 1 ? maxDim / aspectRatio : maxDim;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            const dominantColors = getDominantColors(pixelData, 6);
+
+            const paletteContainer = document.getElementById('palette-container-image');
+            displayPalette(dominantColors, paletteContainer);
+
+            const themes = generateThemesFromPalette(dominantColors, true);
+            displayThemes(themes);
+        }
+
+        function getDominantColors(pixelData, k) {
+            const points = [];
+            for (let i = 0; i < pixelData.length; i += 4 * 5) {
+                if (pixelData[i + 3] > 125) { points.push([pixelData[i], pixelData[i + 1], pixelData[i + 2]]); }
+            }
+            let centroids = points.slice(0, k).map(p => [...p]);
+            for (let iter = 0; iter < 10; iter++) {
+                const clusters = Array.from({ length: k }, () => []);
+                for (const point of points) {
+                    let minDist = Infinity, clusterIndex = 0;
+                    for (let i = 0; i < k; i++) {
+                        const dist = Math.sqrt(Math.pow(point[0] - centroids[i][0], 2) + Math.pow(point[1] - centroids[i][1], 2) + Math.pow(point[2] - centroids[i][2], 2));
+                        if (dist < minDist) { minDist = dist; clusterIndex = i; }
+                    }
+                    clusters[clusterIndex].push(point);
+                }
+                for (let i = 0; i < k; i++) {
+                    if (clusters[i].length > 0) {
+                        const sum = clusters[i].reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]], [0, 0, 0]);
+                        centroids[i] = [sum[0] / clusters[i].length, sum[1] / clusters[i].length, sum[2] / clusters[i].length];
+                    }
+                }
+            }
+            return centroids.map(c => rgbToHex(Math.round(c[0]), Math.round(c[1]), Math.round(c[2])));
+        }
+
+        function generateThemesFromPalette(colors, isFromImage = false) {
+            if (colors.length < 4) return [];
+            const sortedColors = [...new Set(colors)].sort((a, b) => getLuminance(a) - getLuminance(b));
+            if (sortedColors.length < 4) return [];
+
+            const themes = [];
+            const darkest = sortedColors[0];
+            const darkMid = sortedColors[1];
+            const lightMid = sortedColors[sortedColors.length - 2];
+            const lightest = sortedColors[sortedColors.length - 1];
+
+            const createTheme = (name, type, primary, secondary, text, stageBg) => {
+                const theme = JSON.parse(JSON.stringify(MASTER_THEME_TEMPLATE));
+                theme.name = name;
+                theme.theme_type = type;
+                theme.theme_primary_color = primary;
+                theme.theme_secondary_color = secondary;
+                theme.primary_text_color = text;
+                theme.secondary_text_color = findHighContrastColor(secondary, [primary, text]);
+                theme.stage_text_color = text;
+                theme.stage_background = stageBg;
+                theme.event_background = stageBg;
+                theme.screen_saver_background = secondary;
+                theme.screen_saver_text_color = theme.secondary_text_color;
+                return theme;
+            };
+
+            // Original themes
+            const accent1 = findVibrantColor(sortedColors.slice(1, -1), [darkest, lightest]);
+            themes.push(createTheme("Cyber Noir", "dark", darkest, accent1, findHighContrastColor(darkest, [lightest, lightMid]), `linear-gradient(270deg, ${darkMid} 0%, ${darkest} 100%)`));
+
+            const accent2 = findVibrantColor(sortedColors.slice(1, -1), [darkest, lightest]);
+            themes.push(createTheme("Daylight Corporate", "light", lightest, accent2, findHighContrastColor(lightest, [darkest, darkMid]), `linear-gradient(90deg, ${lightMid} 0%, ${lightest} 100%)`));
+
+            const gradientStart = findVibrantColor(sortedColors, []);
+            themes.push(createTheme("Dynamic Gradient", "dark", darkMid, lightest, findHighContrastColor(darkMid, [lightest]), `linear-gradient(120deg, ${gradientStart} 0%, ${darkMid} 100%)`));
+
+            themes.push(createTheme("Minimalist Focus", "dark", darkest, lightMid, findHighContrastColor(darkest, [lightest]), `linear-gradient(270deg, ${darkMid} 0%, ${darkest} 100%)`));
+
+            // New Modern Themes
+            const modernAccent = findVibrantColor(sortedColors, [darkest, lightest]);
+            themes.push(createTheme(
+                "Modern Glass",
+                "dark",
+                modernAccent,
+                lightest,
+                lightest,
+                `linear-gradient(135deg, rgba(${hexToRgb(darkest).join(', ')}, 0.95) 0%, rgba(${hexToRgb(darkMid).join(', ')}, 0.85) 100%)`
+            ));
+
+            themes.push(createTheme(
+                "Neon Pulse",
+                "dark",
+                modernAccent,
+                darkest,
+                lightest,
+                `linear-gradient(45deg, ${darkest} 0%, ${modernAccent} 50%, ${darkest} 100%)`
+            ));
+
+            // Professional Themes
+            const professionalAccent = findVibrantColor(sortedColors.slice(1, -1), [darkest, lightest]);
+            themes.push(createTheme(
+                "Executive Suite",
+                "light",
+                lightest,
+                professionalAccent,
+                darkest,
+                `linear-gradient(to right, ${lightest} 0%, ${lightMid} 100%)`
+            ));
+
+            themes.push(createTheme(
+                "Boardroom",
+                "dark",
+                darkest,
+                professionalAccent,
+                lightest,
+                `linear-gradient(to bottom, ${darkest} 0%, ${darkMid} 100%)`
+            ));
+
+            // Creative Themes
+            const creativeAccent = findVibrantColor(sortedColors, []);
+            themes.push(createTheme(
+                "Creative Studio",
+                "dark",
+                creativeAccent,
+                darkest,
+                lightest,
+                `radial-gradient(circle at top right, ${creativeAccent} 0%, ${darkest} 100%)`
+            ));
+
+            themes.push(createTheme(
+                "Artistic Flow",
+                "light",
+                lightest,
+                creativeAccent,
+                darkest,
+                `linear-gradient(225deg, ${lightest} 0%, ${lightMid} 50%, ${creativeAccent} 100%)`
+            ));
+
+            // Minimalist Themes
+            themes.push(createTheme(
+                "Zen Minimal",
+                "light",
+                lightest,
+                darkMid,
+                darkest,
+                `linear-gradient(to bottom, ${lightest} 0%, ${lightMid} 100%)`
+            ));
+
+            themes.push(createTheme(
+                "Dark Minimal",
+                "dark",
+                darkest,
+                lightMid,
+                lightest,
+                `linear-gradient(to bottom, ${darkest} 0%, ${darkMid} 100%)`
+            ));
+
+            // Image-based themes (only when processing an image)
+            if (isFromImage) {
+                const vibrantColor = findVibrantColor(sortedColors, []);
+                const contrastingColor = findHighContrastColor(vibrantColor, sortedColors);
+
+                // Original image themes
+                const imageTheme1 = createTheme(
+                    "Image Focus - Vibrant",
+                    "dark",
+                    vibrantColor,
+                    contrastingColor,
+                    contrastingColor,
+                    `url(${imagePreview.src}) center/cover`
+                );
+                imageTheme1.name_card_background = `rgba(${hexToRgb(vibrantColor).join(', ')}, 0.8)`;
+                imageTheme1.lower_third_background = `rgba(${hexToRgb(vibrantColor).join(', ')}, 0.8)`;
+                themes.push(imageTheme1);
+
+                const imageTheme2 = createTheme(
+                    "Image Focus - Subtle",
+                    "dark",
+                    lightest,
+                    darkest,
+                    lightest,
+                    `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${imagePreview.src}) center/cover`
+                );
+                imageTheme2.name_card_background = `rgba(${hexToRgb(darkest).join(', ')}, 0.8)`;
+                imageTheme2.lower_third_background = `rgba(${hexToRgb(darkest).join(', ')}, 0.8)`;
+                themes.push(imageTheme2);
+
+                // New image-based themes
+                const imageTheme3 = createTheme(
+                    "Image Focus - Gradient Overlay",
+                    "dark",
+                    vibrantColor,
+                    contrastingColor,
+                    contrastingColor,
+                    `linear-gradient(135deg, rgba(${hexToRgb(darkest).join(', ')}, 0.7) 0%, rgba(${hexToRgb(vibrantColor).join(', ')}, 0.3) 100%), url(${imagePreview.src}) center/cover`
+                );
+                imageTheme3.name_card_background = `rgba(${hexToRgb(vibrantColor).join(', ')}, 0.6)`;
+                imageTheme3.lower_third_background = `rgba(${hexToRgb(vibrantColor).join(', ')}, 0.6)`;
+                themes.push(imageTheme3);
+
+                const imageTheme4 = createTheme(
+                    "Image Focus - Blur",
+                    "dark",
+                    lightest,
+                    darkest,
+                    lightest,
+                    `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(${imagePreview.src}) center/cover`
+                );
+                imageTheme4.name_card_background = `rgba(${hexToRgb(darkest).join(', ')}, 0.7)`;
+                imageTheme4.lower_third_background = `rgba(${hexToRgb(darkest).join(', ')}, 0.7)`;
+                imageTheme4.sidebar_blur = "20px";
+                themes.push(imageTheme4);
+            }
+
+            return themes;
+        }
+
+        // --- UI Display Functions ---
+        function displayPalette(colors, container) {
+            container.innerHTML = '';
+            const paletteWrapper = document.createElement('div');
+            paletteWrapper.className = 'w-full h-full flex flex-col justify-center items-center';
+            const colorStrip = document.createElement('div');
+            colorStrip.className = 'flex w-full h-16 rounded-lg overflow-hidden shadow-inner';
+            colors.forEach(color => {
+                const colorDiv = document.createElement('div');
+                colorDiv.style.backgroundColor = color;
+                colorDiv.className = 'flex-1 tooltip';
+                colorDiv.innerHTML = `<span class="tooltiptext">${color}</span>`;
+                colorStrip.appendChild(colorDiv);
+            });
+            paletteWrapper.appendChild(colorStrip);
+            container.appendChild(paletteWrapper);
+        }
+
+        function displayThemes(themes) {
+            themesOutput.innerHTML = '';
+            generatedThemesStore = {}; // Clear previous themes from store
+            if (themes.length === 0) { themesOutput.innerHTML = `<p class="text-center text-gray-500">Could not generate themes. Try different inputs.</p>`; return; }
+            themes.forEach((theme, index) => {
+                const cardId = `theme-card-${index}`;
+                generatedThemesStore[cardId] = theme; // Store theme for later access
+                const cardHTML = `<div class="theme-card mb-8 bg-white rounded-2xl shadow-lg overflow-hidden"><div class="p-6 flex justify-between items-center"><h3 class="text-2xl font-bold text-gray-900">${theme.name}</h3><div class="flex space-x-1 rounded-lg bg-gray-200 p-1"><button onclick="toggleView('${cardId}', 'preview')" id="${cardId}-preview-btn" class="preview-json-toggle bg-white text-gray-800 rounded-md py-1 px-3 text-sm font-semibold">Preview</button><button onclick="toggleView('${cardId}', 'json')" id="${cardId}-json-btn" class="preview-json-toggle text-gray-600 rounded-md py-1 px-3 text-sm font-semibold">JSON</button></div></div><div id="${cardId}-content" class="grid grid-cols-1"></div></div>`;
+                themesOutput.insertAdjacentHTML('beforeend', cardHTML);
+                toggleView(cardId, 'preview');
+            });
+        }
+
+        function toggleView(cardId, viewType) {
+            const contentEl = document.getElementById(`${cardId}-content`);
+            const previewBtn = document.getElementById(`${cardId}-preview-btn`);
+            const jsonBtn = document.getElementById(`${cardId}-json-btn`);
+            const theme = generatedThemesStore[cardId];
+
+            if (!theme) { console.error("Theme not found for card:", cardId); return; }
+
+            if (viewType === 'preview') {
+                contentEl.innerHTML = generatePreviewHTML(theme);
+                previewBtn.classList.add('bg-white', 'text-gray-800'); previewBtn.classList.remove('text-gray-600');
+                jsonBtn.classList.remove('bg-white', 'text-gray-800'); jsonBtn.classList.add('text-gray-600');
+            } else {
+                contentEl.innerHTML = generateJsonHTML(cardId, theme);
+                jsonBtn.classList.add('bg-white', 'text-gray-800'); jsonBtn.classList.remove('text-gray-600');
+                previewBtn.classList.remove('bg-white', 'text-gray-800'); previewBtn.classList.add('text-gray-600');
+            }
+        }
+
+        function generatePreviewHTML(theme) {
+            // Ensure all required properties exist
+            const defaultTheme = {
+                stage_background: '#000000',
+                theme_primary_color: '#ffffff',
+                theme_secondary_color: '#cccccc',
+                primary_text_color: '#ffffff',
+                secondary_text_color: '#cccccc',
+                lower_third_background: 'var(--theme-secondary-color)'
+            };
+            const safeTheme = { ...defaultTheme, ...theme };
+
+            // Simulated user data for preview
+            const users = [
+                { name: 'Aliyah Faraz', img: 'https://randomuser.me/api/portraits/women/44.jpg' },
+                { name: 'Samuel Bazi', img: 'https://randomuser.me/api/portraits/women/68.jpg' },
+                { name: 'Clark Farrow', img: 'https://randomuser.me/api/portraits/men/75.jpg' }
+            ];
+
+            // Simulated chat messages
+            const messages = [
+                { user: 'User', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', time: '5:23pm' },
+                { user: 'User', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', time: '5:23pm' },
+                { user: 'User', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', time: '5:23pm' }
+            ];
+
+            // Main preview layout
+            return `
+            <div class="w-full h-full min-h-[600px] flex flex-col" style="background: ${safeTheme.stage_background}; border-radius: 1.5rem;">
+                <!-- Top Navigation Bar -->
+                <div class="flex items-center px-8 py-3" style="background: ${changeAlpha(safeTheme.theme_primary_color, 0.15)}; border-radius: 1.5rem 1.5rem 0 0;">
+                    <div class="flex space-x-8 text-base font-semibold">
+                        <span style="color: ${safeTheme.theme_secondary_color}; border-bottom: 3px solid ${safeTheme.theme_secondary_color}; padding-bottom: 2px;">Stage</span>
+                        <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.7)};">Agenda</span>
+                        <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.7)};">Rooms</span>
+                        <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.7)};">Booths</span>
+                        <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.7)};">Speakers</span>
+                        <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.7)};">People</span>
+                    </div>
+                    <div class="ml-auto w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-8 h-8 rounded-full" />
+                    </div>
+                </div>
+                <div class="flex flex-1 w-full" style="min-height: 400px;">
+                    <!-- Main Video Tiles Area -->
+                    <div class="flex-1 flex flex-col p-6">
+                        <div class="grid grid-cols-2 gap-6 mb-6">
+                            <div class="col-span-1 row-span-1 bg-white bg-opacity-10 rounded-2xl shadow-lg flex items-end justify-start relative overflow-hidden border-2 border-black/10" style="aspect-ratio: 16/9;">
+                                <img src="${users[0].img}" class="absolute w-full h-full object-cover rounded-2xl" style="z-index:0;" />
+                                <div class="absolute left-0 bottom-3 px-4 py-1 rounded-full font-semibold text-sm" style="background:${safeTheme.theme_secondary_color}; color:${safeTheme.secondary_text_color}; z-index:1;">${users[0].name}</div>
+                            </div>
+                            <div class="col-span-1 row-span-1 bg-white bg-opacity-10 rounded-2xl shadow-lg flex items-end justify-start relative overflow-hidden border-2 border-black/10" style="aspect-ratio: 16/9;">
+                                <img src="${users[1].img}" class="absolute w-full h-full object-cover rounded-2xl" style="z-index:0;" />
+                                <div class="absolute left-0 bottom-3 px-4 py-1 rounded-full font-semibold text-sm" style="background:${safeTheme.theme_secondary_color}; color:${safeTheme.secondary_text_color}; z-index:1;">${users[1].name}</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="col-span-1 row-span-1 bg-white bg-opacity-10 rounded-2xl shadow-lg flex items-end justify-start relative overflow-hidden border-2 border-black/10" style="aspect-ratio: 16/9;">
+                                <img src="${users[2].img}" class="absolute w-full h-full object-cover rounded-2xl" style="z-index:0;" />
+                                <div class="absolute left-0 bottom-3 px-4 py-1 rounded-full font-semibold text-sm" style="background:${safeTheme.theme_secondary_color}; color:${safeTheme.secondary_text_color}; z-index:1;">${users[2].name}</div>
+                            </div>
+                            <div></div>
+                        </div>
+                    </div>
+                    <!-- Chat Sidebar -->
+                    <div class="w-[350px] min-w-[300px] max-w-[400px] rounded-2xl flex flex-col ml-4 p-0 shadow-xl" style="border: 1px solid #222; background: ${changeAlpha(safeTheme.theme_secondary_color, 0.13)}; color: ${safeTheme.primary_text_color};">
+                        <div class="flex items-center px-6 pt-4 pb-2 border-b" style="border-color: ${changeAlpha(safeTheme.primary_text_color, 0.15)};">
+                            <div class="flex space-x-6 text-base font-semibold">
+                                <span style="color: ${safeTheme.theme_secondary_color}; border-bottom: 2px solid ${safeTheme.theme_secondary_color}; padding-bottom: 2px;">Chat</span>
+                                <span style="color: ${safeTheme.primary_text_color}; position: relative;">Messages <span class="ml-1 inline-block" style="background:${safeTheme.theme_secondary_color}; color:${safeTheme.secondary_text_color}; border-radius:9999px; padding:0 8px; font-size:12px;">2</span></span>
+                                <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.8)};">Docs</span>
+                                <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.8)};">Polls</span>
+                                <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.8)};">Q&amp;A</span>
+                                <span style="color: ${changeAlpha(safeTheme.primary_text_color, 0.8)};">Media</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-y-auto px-4 py-2" style="max-height: 300px;">
+                            <div class="text-xs mb-2" style="color:${changeAlpha(safeTheme.primary_text_color, 0.7)};">Speakers &nbsp; Session &nbsp; <span style="color:${safeTheme.theme_secondary_color};">Public</span></div>
+                            <div class="text-center text-xs mb-2" style="color:${changeAlpha(safeTheme.primary_text_color, 0.5)};">Load old messages</div>
+                            ${messages.map(msg => `
+                                <div class="flex items-start mb-4">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2" style="background:${changeAlpha(safeTheme.theme_secondary_color, 0.2)};"></div>
+                                    <div class="flex-1">
+                                        <div class="text-xs" style="color:${changeAlpha(safeTheme.primary_text_color, 0.6)};">${msg.time}</div>
+                                        <div class="rounded-lg px-3 py-2 text-sm mt-1" style="background:${changeAlpha(safeTheme.theme_primary_color, 0.13)}; color:${safeTheme.primary_text_color};">${msg.text}</div>
+                                        <div class="mt-1 flex space-x-1 text-lg" style="color:${safeTheme.theme_secondary_color};">🧡<span class="text-xs" style="color:${changeAlpha(safeTheme.primary_text_color, 0.7)};">1</span></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="p-4 border-t" style="border-color: ${changeAlpha(safeTheme.primary_text_color, 0.15)};">
+                            <input type="text" class="flex-1 rounded-lg px-3 py-2 text-sm outline-none" placeholder="Enter your message" style="background: ${changeAlpha(safeTheme.theme_primary_color, 0.13)}; color:${safeTheme.primary_text_color};" disabled />
+                            <button class="ml-2 rounded-full w-8 h-8 flex items-center justify-center" style="background:${safeTheme.theme_secondary_color}; color:${safeTheme.secondary_text_color};" disabled><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13"></path><path d="M22 2L15 22L11 13L2 9L22 2Z"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bottom Bar -->
+            </div>
+            `;
+        }
+
+        function generateJsonHTML(cardId, theme) {
+            return `<div class="p-6 bg-gray-900 text-white relative h-full">
+                <div class="tooltip">
+                    <button class="absolute top-4 right-4 text-gray-400 hover:text-white" onclick="copyJsonById('${cardId}-json-pre')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                    <span class="tooltiptext">Copy JSON</span>
+                </div>
+                <div class="relative">
+                    <pre id="${cardId}-json-pre" class="text-xs overflow-x-auto h-96 bg-gray-800 p-4 rounded" contenteditable="true" onblur="handleJsonEdit('${cardId}')" onkeydown="handleJsonKeyDown(event, '${cardId}')">${JSON.stringify(theme, null, 2)}</pre>
+                    <div id="${cardId}-json-status" class="absolute bottom-2 right-2 text-sm"></div>
+                </div>
+            </div>`;
+        }
+
+        function handleJsonKeyDown(event, cardId) {
+            // Allow tab key to insert spaces instead of losing focus
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                document.execCommand('insertText', false, '    ');
+            }
+        }
+
+        function handleJsonEdit(cardId) {
+            const preElement = document.getElementById(`${cardId}-json-pre`);
+            const statusElement = document.getElementById(`${cardId}-json-status`);
+            const jsonText = preElement.innerText;
+
+            try {
+                // Parse the JSON to validate it
+                const updatedTheme = JSON.parse(jsonText);
+                
+                // Validate required theme properties
+                const requiredProps = [
+                    'theme_primary_color', 'theme_secondary_color', 'primary_text_color',
+                    'secondary_text_color', 'stage_background', 'stage_text_color'
+                ];
+                
+                const missingProps = requiredProps.filter(prop => !updatedTheme[prop]);
+                if (missingProps.length > 0) {
+                    throw new Error(`Missing required properties: ${missingProps.join(', ')}`);
+                }
+
+                // Validate color formats
+                const colorProps = ['theme_primary_color', 'theme_secondary_color', 'primary_text_color', 'secondary_text_color'];
+                const invalidColors = colorProps.filter(prop => {
+                    const color = updatedTheme[prop];
+                    return !color || !/^#[0-9A-Fa-f]{6}$/.test(color);
+                });
+                if (invalidColors.length > 0) {
+                    throw new Error(`Invalid color format in: ${invalidColors.join(', ')}`);
+                }
+                
+                // Update the theme in the store
+                generatedThemesStore[cardId] = updatedTheme;
+                
+                // Update the preview
+                const contentEl = document.getElementById(`${cardId}-content`);
+                contentEl.innerHTML = generatePreviewHTML(updatedTheme);
+                
+                // Show success status
+                statusElement.textContent = '✓ Valid JSON';
+                statusElement.className = 'absolute bottom-2 right-2 text-sm text-green-400';
+                
+                // Format the JSON with proper indentation
+                preElement.innerText = JSON.stringify(updatedTheme, null, 2);
+
+                // Verify preview matches JSON
+                verifyPreviewMatch(cardId, updatedTheme);
+            } catch (error) {
+                // Show error status with specific error message
+                statusElement.textContent = `✗ ${error.message}`;
+                statusElement.className = 'absolute bottom-2 right-2 text-sm text-red-400';
+                
+                // Revert to the last valid JSON
+                preElement.innerText = JSON.stringify(generatedThemesStore[cardId], null, 2);
+            }
+        }
+
+        function verifyPreviewMatch(cardId, theme) {
+            const previewElement = document.getElementById(`${cardId}-content`);
+            const previewHTML = previewElement.innerHTML;
+            
+            // Check if key theme properties are reflected in the preview
+            const checks = [
+                { prop: 'stage_background', selector: 'background' },
+                { prop: 'theme_primary_color', selector: 'color' },
+                { prop: 'theme_secondary_color', selector: 'color' },
+                { prop: 'primary_text_color', selector: 'color' },
+                { prop: 'secondary_text_color', selector: 'color' }
+            ];
+
+            const mismatches = checks.filter(check => {
+                const value = theme[check.prop];
+                return !previewHTML.includes(value);
+            });
+
+            if (mismatches.length > 0) {
+                console.warn('Preview mismatch detected:', mismatches.map(m => m.prop).join(', '));
+                // Force preview update
+                previewElement.innerHTML = generatePreviewHTML(theme);
+            }
+        }
+
+        function copyJsonById(elementId) {
+            const pre = document.getElementById(elementId);
+            const text = pre.innerText;
+            const tooltip = pre.parentElement.querySelector('.tooltiptext');
+            navigator.clipboard.writeText(text).then(() => {
+                tooltip.textContent = 'Copied!';
+                setTimeout(() => {
+                    tooltip.textContent = 'Copy JSON';
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed', err);
+                tooltip.textContent = 'Copy Failed';
+            });
+        }
+
+        // --- Color Helper Functions ---
+        function rgbToHex(r, g, b) {
+            // Convert RGB values to hex string
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        function hexToRgb(hex) {
+            // Convert hex color string to RGB array
+            if (!hex) {
+                return null;
+            }
+            hex = hex.trim().toLowerCase();
+
+            // Special cases for black and white
+            if (hex === "#000" || hex === "000") {
+                return [0, 0, 0];
+            }
+            if (hex === "#fff" || hex === "fff") {
+                return [255, 255, 255];
+            }
+
+            // Remove leading #
+            hex = hex.replace(/^#/, '');
+
+            // Expand 3-digit hex to 6-digit
+            if (hex.length === 3) {
+                hex = hex.split('').map(function (c) { return c + c; }).join('');
+            }
+
+            if (hex.length !== 6) {
+                return null;
+            }
+
+            var r = parseInt(hex.slice(0, 2), 16);
+            var g = parseInt(hex.slice(2, 4), 16);
+            var b = parseInt(hex.slice(4, 6), 16);
+
+            return [r, g, b];
+        }
+
+        function getLuminance(hex) {
+            // Calculate luminance for a hex color
+            var rgb = hexToRgb(hex);
+            var r = rgb[0] / 255.0;
+            var g = rgb[1] / 255.0;
+            var b = rgb[2] / 255.0;
+            r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+            g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+            b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+
+        function getContrastRatio(h1, h2) {
+            // Calculate contrast ratio between two hex colors
+            var l1 = getLuminance(h1);
+            var l2 = getLuminance(h2);
+            return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+        }
+
+        function findHighContrastColor(baseHex, colorList) {
+            // Find the color in colorList with the highest contrast to baseHex
+            var maxRatio = 0;
+            var bestColor = getLuminance(baseHex) > 0.5 ? '#000000' : '#FFFFFF';
+            for (var i = 0; i < colorList.length; i++) {
+                var colorHex = colorList[i];
+                var ratio = getContrastRatio(baseHex, colorHex);
+                if (ratio > maxRatio) {
+                    maxRatio = ratio;
+                    bestColor = colorHex;
+                }
+            }
+            if (getContrastRatio(baseHex, bestColor) < 4.5) {
+                return getLuminance(baseHex) > 0.5 ? '#000000' : '#FFFFFF';
+            }
+            return bestColor;
+        }
+
+        function findVibrantColor(colors, exclude) {
+            // Find the most vibrant color (highest saturation) not in exclude
+            var maxSat = -1;
+            var vibrantColor = colors.filter(function (c) { return exclude.indexOf(c) === -1; })[0] || colors[0];
+            colors.forEach(function (color) {
+                if (exclude.indexOf(color) !== -1) {
+                    return;
+                }
+                var rgb = hexToRgb(color);
+                var max = Math.max(rgb[0], rgb[1], rgb[2]);
+                var min = Math.min(rgb[0], rgb[1], rgb[2]);
+                var sat = (max === 0) ? 0 : (max - min) / max;
+                if (sat > maxSat) {
+                    maxSat = sat;
+                    vibrantColor = color;
+                }
+            });
+            return vibrantColor;
+        }
+
+        function changeAlpha(hex, alpha) {
+            // Convert hex color to rgba string with given alpha
+            var rgb = hexToRgb(hex);
+            return 'rgba(' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + ', ' + alpha + ')';
+        }
+
+        function shadeColor(color, percent) {
+            // Shade a hex color by a percent (-1 to 1)
+            var R = parseInt(color.substring(1, 3), 16);
+            var G = parseInt(color.substring(3, 5), 16);
+            var B = parseInt(color.substring(5, 7), 16);
+            R = parseInt(R * (100 + percent * 100) / 100);
+            G = parseInt(G * (100 + percent * 100) / 100);
+            B = parseInt(B * (100 + percent * 100) / 100);
+            R = (R < 255) ? R : 255;
+            G = (G < 255) ? G : 255;
+            B = (B < 255) ? B : 255;
+            R = (R > 0) ? R : 0;
+            G = (G > 0) ? G : 0;
+            B = (B > 0) ? B : 0;
+            var RR = ((R.toString(16).length == 1) ? "0" + R.toString(16) : R.toString(16));
+            var GG = ((G.toString(16).length == 1) ? "0" + G.toString(16) : G.toString(16));
+            var BB = ((B.toString(16).length == 1) ? "0" + B.toString(16) : B.toString(16));
+            return "#" + RR + GG + BB;
+        }
+
+        // --- Tab Management ---
+        function switchTab(tabName) {
+            ['image', 'colors', 'website'].forEach(name => {
+                document.getElementById(`panel-${name}`).classList.add('hidden');
+                document.getElementById(`tab-${name}`).classList.remove('text-indigo-600', 'border-indigo-500');
+                document.getElementById(`tab-${name}`).classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            });
+            document.getElementById(`panel-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('text-indigo-600', 'border-indigo-500');
+
+            if (tabName === 'image') {
+                document.getElementById('palette-display-common').classList.add('hidden');
+                document.getElementById('palette-display-image').classList.remove('hidden');
+            } else {
+                document.getElementById('palette-display-image').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>
